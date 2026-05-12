@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "discoveryRoot": ".",
+  "repos": [
+    {
+      "name": "mono",
+      "path": ".",
+      "category": "meta",
+      "defaultBranch": "main",
+      "protectedBranches": ["main"],
+      "owner": "platform",
+      "requiresExtraCaution": true,
+      "notes": "Meta repo: holds CLAUDE.md, docs, .claude/ config, and the gitnexus registry."
+    },
+    {
+      "name": "engine",
+      "path": "./engine",
+      "category": "engine",
+      "packageName": "@adaptic/engine",
+      "defaultBranch": "main",
+      "protectedBranches": ["main", "stable"],
+      "deploymentEnv": "Railway adaptic-os/stable",
+      "related": ["utils", "backend-legacy", "lumic-utils"],
+      "owner": "core",
+      "allowAgentEdits": true,
+      "requiresExtraCaution": true,
+      "notes": "Real-time trading engine. Coordinate with backend-legacy publishes."
+    },
+    {
+      "name": "utils",
+      "path": "./utils",
+      "category": "package",
+      "packageName": "@adaptic/utils",
+      "defaultBranch": "main",
+      "protectedBranches": ["main"],
+      "related": ["backend-legacy", "lumic-utils"],
+      "notes": "Financial utility library; published to npm as @adaptic/utils."
+    },
+    {
+      "name": "backend-legacy",
+      "path": "./backend-legacy",
+      "category": "backend",
+      "packageName": "@adaptic/backend-legacy",
+      "defaultBranch": "main",
+      "protectedBranches": ["main"],
+      "notes": "Sole backend; owns the Prisma schema and codegen pipeline."
+    },
+    {
+      "name": "lumic-utils",
+      "path": "./lumic-utils",
+      "category": "package",
+      "packageName": "@adaptic/lumic-utils",
+      "defaultBranch": "main",
+      "protectedBranches": ["main"],
+      "notes": "Org-wide utilities (LLM, AWS, Slack)."
+    },
+    {
+      "name": "platform",
+      "path": "./platform",
+      "category": "frontend",
+      "packageName": "@adapticai/platform",
+      "defaultBranch": "main",
+      "protectedBranches": ["main"],
+      "notes": "Frontend monorepo (pnpm + Turborepo)."
+    }
+  ]
+}
