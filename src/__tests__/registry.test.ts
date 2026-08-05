@@ -66,8 +66,54 @@ describe('loadRegistry', () => {
     const dir = mkdtempSync(join(tmpdir(), 'gn-vers-'));
     cleanupQueue.push(() => rmSync(dir, { recursive: true, force: true }));
     const path = join(dir, REGISTRY_FILE_NAME);
-    writeFileSync(path, '{"version": 2, "repos": []}');
+    writeFileSync(path, '{"version": 3, "repos": []}');
     expect(() => loadRegistry(path)).toThrow(/Unsupported registry version/);
+  });
+
+  it('throws on a non-numeric version', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gn-vers-str-'));
+    cleanupQueue.push(() => rmSync(dir, { recursive: true, force: true }));
+    const path = join(dir, REGISTRY_FILE_NAME);
+    writeFileSync(path, '{"version": "1", "repos": []}');
+    expect(() => loadRegistry(path)).toThrow(/Unsupported registry version/);
+  });
+
+  it('accepts a v2 registry and ignores its additive metadata', () => {
+    // Regression pin: gitnexus.config.json was bumped to v2 while the loader
+    // still hard-required 1, so every command — including `gitnexus guard`,
+    // the documented pre-push safety check — aborted with exit 2 and
+    // validated nothing. v2 is additive; the parsed entry must match v1.
+    const dir = mkdtempSync(join(tmpdir(), 'gn-vers2-'));
+    cleanupQueue.push(() => rmSync(dir, { recursive: true, force: true }));
+    const path = join(dir, REGISTRY_FILE_NAME);
+    writeFileSync(
+      path,
+      JSON.stringify({
+        version: 2,
+        schemaUrl: 'https://example.invalid/gitnexus.schema.json',
+        metaRepo: 'mono',
+        topicIndex: { trading: ['engine'] },
+        repos: [
+          {
+            name: 'engine',
+            path: './engine',
+            category: 'engine',
+            owner: 'platform',
+            purpose: 'trading engine',
+            runtime: 'node',
+            claudeMd: './engine/CLAUDE.md',
+            entrypoints: ['src/server.ts'],
+            topics: ['trading'],
+            related: ['utils'],
+            requiresExtraCaution: true,
+          },
+        ],
+      }),
+    );
+    const parsed = loadRegistry(path);
+    expect(parsed.file.repos).toHaveLength(1);
+    expect(parsed.file.repos[0].name).toBe('engine');
+    expect(parsed.file.repos[0].category).toBe('engine');
   });
 
   it('throws on entry with invalid category', () => {

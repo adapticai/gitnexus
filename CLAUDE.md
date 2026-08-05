@@ -18,7 +18,7 @@ Node engine: `>=20`. Single runtime dep: `chalk`. Tests are real-tmp-repo integr
 
 - **No shell exec.** All git invocations go through `runGit` in `src/git.ts` which uses `execFileSync` with an explicit argv array. ESLint blocks `exec` calls (`no-restricted-syntax`).
 - **No mutations.** Functions in `src/git.ts` are read-only by intent. Adding any new mutating git command requires explicit code review and a separately-named CLI command (e.g. `gitnexus sync --apply`).
-- **Single config schema.** `RegistryFile.version === 1`. Bumping the version is a breaking change.
+- **Config schema versions.** The loader accepts `RegistryFile.version` in `SUPPORTED_REGISTRY_VERSIONS` (currently `1` and `2`). v2 is purely ADDITIVE over v1 — extra top-level (`schemaUrl`, `metaRepo`, `topicIndex`) and per-repo (`owner`, `purpose`, `runtime`, `claudeMd`, `entrypoints`, `topics`, `related`, `requiresExtraCaution`) metadata that `parseEntry` ignores. Introducing a version that CHANGES or REMOVES an existing field is still a breaking change and must be added to the set deliberately. Never narrow the set without checking `gitnexus.config.json` first: the loader once hard-required `1` after the config had been bumped to `2`, which made every command — including `gitnexus guard`, the documented pre-push safety check — abort with exit 2 and validate nothing.
 - **Stable exit codes.** `0` ok, `1` warn, `2` error, `3` bad usage. Treat these as a public contract.
 - **Stable risk codes.** Codes in `src/types.ts` (`MISSING_REPO`, `DIRTY_TREE`, …) are part of the public surface. Renaming is a breaking change.
 

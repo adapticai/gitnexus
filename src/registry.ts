@@ -40,6 +40,22 @@ export function findRegistryFile(start: string): string | null {
   return null;
 }
 
+/**
+ * Registry schema versions this build can load.
+ *
+ * v2 (2026-08) is PURELY ADDITIVE over v1: it introduces the top-level
+ * `schemaUrl` / `metaRepo` / `topicIndex` keys and the per-repo `owner`,
+ * `purpose`, `runtime`, `claudeMd`, `entrypoints`, `topics`, `related` and
+ * `requiresExtraCaution` metadata. `parseEntry` reads only the fields it knows
+ * and ignores the rest, so a v2 file yields an identical `RegistryEntry` set.
+ *
+ * Accepting both matters operationally: `gitnexus.config.json` was bumped to
+ * v2 while the loader still hard-required 1, so EVERY command — including
+ * `gitnexus guard`, the documented pre-push safety check — aborted with exit 2
+ * and validated nothing.
+ */
+const SUPPORTED_REGISTRY_VERSIONS: ReadonlySet<number> = new Set([1, 2]);
+
 interface RawRegistryFile {
   version?: unknown;
   discoveryRoot?: unknown;
@@ -173,8 +189,10 @@ export function loadRegistry(registryPath: string): ParsedRegistry {
   } catch (err) {
     throw new RegistryError(`Failed to parse ${registryPath}: ${(err as Error).message}`);
   }
-  if (raw.version !== 1) {
-    throw new RegistryError(`Unsupported registry version: ${String(raw.version)}. Expected 1.`);
+  if (typeof raw.version !== 'number' || !SUPPORTED_REGISTRY_VERSIONS.has(raw.version)) {
+    throw new RegistryError(
+      `Unsupported registry version: ${String(raw.version)}. Expected one of ${[...SUPPORTED_REGISTRY_VERSIONS].join(', ')}.`,
+    );
   }
   if (!Array.isArray(raw.repos)) {
     throw new RegistryError(`Registry "repos" must be an array.`);
